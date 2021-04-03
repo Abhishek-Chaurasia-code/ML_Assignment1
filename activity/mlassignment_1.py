@@ -7,6 +7,8 @@ Original file is located at
     https://colab.research.google.com/drive/1M5zyX-a_pZT-wPVeOyWF5Jr2iM7wnF-l
 """
 
+#Machine learning-based offline signature verification systems
+
 #install kaggle
 !pip install -q kaggle
 
@@ -22,7 +24,7 @@ files.upload()
 
 !kaggle datasets download -d robinreni/signature-verification-dataset
 
-!unzip signature-verification-dataset.zip
+#!unzip signature-verification-dataset.zip
 
 train_dir="../content/sign_data/train"
 test_dir="../content/sign_data/test_data"
@@ -45,7 +47,7 @@ import glob
 
 train_data = []
 train_labels = []
-
+#Training data
 for per in os.listdir('/content/sign_data/train/'):
     for data in glob.glob('/content/sign_data/train/'+per+'/*.*'):
         img = cv2.imread(data)
@@ -60,7 +62,7 @@ for per in os.listdir('/content/sign_data/train/'):
 train_data = np.array(train_data)/255.0
 train_labels = np.array(train_labels)
 
-#Test Data
+#Testing Data
 
 test_data = []
 test_labels = []
@@ -95,6 +97,7 @@ from sklearn.utils import shuffle
 train_data,train_labels = shuffle(train_data,train_labels)
 test_data,test_labels = shuffle(test_data,test_labels)
 
+#Building a cnn architecture
 from keras.models import Sequential, Model, load_model
 from keras import applications
 from keras import optimizers
@@ -115,6 +118,7 @@ model.compile(loss='categorical_crossentropy', optimizer=optimizers.Adam(lr=1e-4
 
 model.summary()
 
+#Taking ideal epochs and batch size
 from keras.callbacks import ModelCheckpoint, LearningRateScheduler, EarlyStopping, ReduceLROnPlateau, TensorBoard
 earlyStopping = EarlyStopping(monitor='val_loss',
                               min_delta=0,
@@ -124,10 +128,11 @@ earlyStopping = EarlyStopping(monitor='val_loss',
 early_stop=[earlyStopping]
 
 
-EPOCHS = 20
+EPOCHS = 25
 BS = 64
-progess = model.fit(train_data,train_labels, batch_size=BS,epochs=EPOCHS, callbacks=early_stop,validation_split=.3)
+progess = model.fit(train_data,train_labels, batch_size=BS,epochs=EPOCHS, callbacks=early_stop,validation_split=.45)
 
+#plotting training and validation accuracy graph
 acc = progess.history['accuracy']
 val_acc = progess.history['val_accuracy']
 loss = progess.history['loss']
@@ -142,6 +147,7 @@ plt.legend()
  
 plt.figure()
 
+#plotting training and validation loss graph
 plt.plot(epochs, loss, 'b', label='Training loss')
 plt.plot(epochs, val_loss, 'r', label='Validation loss')
 plt.title('Training and validation loss')
@@ -149,16 +155,21 @@ plt.legend()
  
 plt.show()
 
+#Using Test data to test the model 
 pred = model.predict(test_data)
 
+#determining accuracy
 from sklearn.metrics import accuracy_score
 accuracy_score(np.argmax(pred,axis=1), test_labels)
 
+#determining recall score
 from sklearn.metrics import recall_score
 recall_score(np.argmax(pred,axis=1), test_labels)
 
+#determining precision score
 from sklearn.metrics import precision_score
 precision_score(np.argmax(pred,axis=1), test_labels)
 
+#determining f1 score
 from sklearn.metrics import f1_score
 f1_score(np.argmax(pred,axis=1), test_labels)
